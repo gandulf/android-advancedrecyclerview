@@ -35,14 +35,13 @@ class SwipingItemOperator {
 
     private RecyclerViewSwipeManager mSwipeManager;
     private RecyclerView.ViewHolder mSwipingItem;
-    private int mSwipingItemPosition;
     private View mSwipingItemContainerView;
     private int mLeftSwipeReactionType;
     private int mUpSwipeReactionType;
     private int mRightSwipeReactionType;
     private int mDownSwipeReactionType;
     private int mSwipingItemWidth;
-    private int mSwipingItemHeight;
+    private final int mSwipingItemHeight;
     private float mInvSwipingItemWidth;
     private float mInvSwipingItemHeight;
     private int mSwipeDistanceX;
@@ -50,23 +49,21 @@ class SwipingItemOperator {
     private float mPrevTranslateAmount;
     private int mInitialTranslateAmountX;
     private int mInitialTranslateAmountY;
-    private boolean mSwipeHorizontal;
+    private final boolean mSwipeHorizontal;
 
     public SwipingItemOperator(
             RecyclerViewSwipeManager manager, RecyclerView.ViewHolder swipingItem,
-            int position, int swipeReactionType,
-            boolean swipeHorizontal) {
+            int swipeReactionType, boolean swipeHorizontal) {
 
         mSwipeManager = manager;
         mSwipingItem = swipingItem;
-        mSwipingItemPosition = position;
         mLeftSwipeReactionType = SwipeReactionUtils.extractLeftReaction(swipeReactionType);
         mUpSwipeReactionType = SwipeReactionUtils.extractUpReaction(swipeReactionType);
         mRightSwipeReactionType = SwipeReactionUtils.extractRightReaction(swipeReactionType);
         mDownSwipeReactionType = SwipeReactionUtils.extractDownReaction(swipeReactionType);
         mSwipeHorizontal = swipeHorizontal;
 
-        mSwipingItemContainerView = ((SwipeableItemViewHolder) swipingItem).getSwipeableContainerView();
+        mSwipingItemContainerView = SwipeableViewHolderUtils.getSwipeableContainerView(swipingItem);
         mSwipingItemWidth = mSwipingItemContainerView.getWidth();
         mSwipingItemHeight = mSwipingItemContainerView.getHeight();
         mInvSwipingItemWidth = calcInv(mSwipingItemWidth);
@@ -100,7 +97,7 @@ class SwipingItemOperator {
         mSwipingItemContainerView = null;
     }
 
-    public void update(int swipeDistanceX, int swipeDistanceY) {
+    public void update(int itemPosition, int swipeDistanceX, int swipeDistanceY) {
         if ((mSwipeDistanceX == swipeDistanceX) && (mSwipeDistanceY == swipeDistanceY)) {
             return;
         }
@@ -137,9 +134,9 @@ class SwipingItemOperator {
         }
 
         mSwipeManager.applySlideItem(
-                mSwipingItem, mSwipingItemPosition,
-                mPrevTranslateAmount, translateAmount, mSwipeHorizontal,
-                false, true);
+                mSwipingItem, itemPosition,
+                mPrevTranslateAmount, translateAmount, true,
+                mSwipeHorizontal, false, true);
 
         mPrevTranslateAmount = translateAmount;
     }

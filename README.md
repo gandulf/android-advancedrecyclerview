@@ -3,15 +3,15 @@ Advanced RecyclerView
 
 This RecyclerView extension library provides Google's Inbox app like swiping, Play Music app like drag-and-drop sorting and expandable item features. Works on API level 9 or later.
 
+[ ![Download](https://api.bintray.com/packages/h6ah4i/maven/android-advancedrecyclerview/images/download.svg) ](https://bintray.com/h6ah4i/maven/android-advancedrecyclerview/_latestVersion)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Advanced%20RecyclerView-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1432)
-
+[![Method Count](https://img.shields.io/badge/Methods and size-core: 1684 | deps: 19003 | 230 KB-e91e63.svg) ](http://www.methodscount.com/?lib=com.h6ah4i.android.widget.advrecyclerview%3Aadvrecyclerview%3A0.10.2)
 ---
 
 ### Download the example app
 
 <a href="https://play.google.com/store/apps/details?id=com.h6ah4i.android.example.advrecyclerview">
-<img alt="Get it on Google Play"
-src="https://developer.android.com/images/brand/en_generic_rgb_wo_60.png" />
+<img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" width="165" height="64" />
 </a>
 
 
@@ -20,8 +20,6 @@ src="https://developer.android.com/images/brand/en_generic_rgb_wo_60.png" />
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=S7cSwMArjUQ" target="_blank">
 <img src="http://img.youtube.com/vi/S7cSwMArjUQ/0.jpg" alt="Advanced" width="480" height="360" border="10" />
 </a>
-
-NOTE: This library does not contain [Snackbar](http://www.google.com/design/spec/components/snackbars-toasts.html). The above example app uses third-party library. (thx. [Snackbar developed by William Mora ](https://github.com/nispok/snackbar)).
 
 ---
 
@@ -34,102 +32,82 @@ Target platforms
 Latest version
 ---
 
-- Version 0.8.1  (Oct. 12, 2015)   ([RELEASE NOTES](./RELEASE-NOTES.md))
+- Version 0.10.2  (November 27, 2016)   ([RELEASE NOTES](./RELEASE-NOTES.md))
+
 
 Getting started
 ---
 
 This library is published on jCenter. Just add these lines to `build.gradle`.
 
-```groovy
+```gradle
 dependencies {
-    compile ('com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:0.8.1@aar'){
+    compile ('com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:0.10.2@aar'){
         transitive=true
     }
 }
 ```
-
----
-
-*This library is provided as the AAR format.
-The source jar file won't be downloaded automatically (due to the current Gradle and Anndroid Studio limitation), so javadoc comments are not displayed on IDE.*
-
-**Here is a workaround thanks to the superb [AARLinkSources](https://github.com/xujiaao/AARLinkSources) Gradle plugin !**
-
-```groovy
-buildscript {
-    repositories {
-        maven { url 'https://raw.github.com/xujiaao/mvn-repository/master/releases' }
-    }
-
-    dependencies {
-        classpath 'com.github.xujiaao:aarLinkSources:1.0.0'
-    }
-}
-
-apply plugin: 'com.android.application'
-apply plugin: 'aar-link-sources'
-
-android {
-    ...
-}
-
-dependencies {
-    compile ('com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:0.8.1@aar'){
-        transitive=true
-    }
-    aarLinkSources 'com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:0.8.1:sources@jar'
-}
-```
-
-Migration Guide
----
-
-The version 0.8.1 has fixed a lot of issues and introduced some new features. Some interface has changed and some methods/values/classes are marked as deprecated. Here is a quick guide for migrating from v0.7.x.
-
-### Swipe
-
-The `SwipeableItemAdapter` interface has been changed drastically.
-Also, some methods and some constants are marked as deprecated because vertical swipe feature is added. 
-
-#### Recommended way
-Implement the new `SwipeableItemAdapter.onItemSwipe()` method which returns `SwipeResultAction` objects.
-The `SwipeResultAction` class has these three overridable methods;
-
-- `void onPerformAction()`
-  - => This method is called immediately after returning from the onItemSwipe() method. Can modify data set an
-- `void onSlideAnimationEnd()`
-  - => This method is called when the item slide animation is completed.
-- `void onCleanUp()`
-  - => This method is called after the onSlideAnimationEnd() method. Clear fields to avoid memory leak.
-
-#### Easy way
-
-Just change the interfaces which your adapter implementes as follows;
-- `SwipeableItemAdapter` -> `LegacySwipeableItemAdapter`
-- `ExpandableSwipeableItemAdapter` -> `LegacyExpandableSwipeableItemAdapter`
-
-### Drag & Drop
-
-:point_right: No special changes are required.
-
-### Expand
-
-:point_right: No special changes are required.
-
 
 Usage
 ---
 
 Please check the implementation of the simple examples.
 
-- [Drag & Drop example](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d/)
-- [Swipe example](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s/)
-- [Expandable item example](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_e/)
+### Drag & Drop related examples
+
+- [Basic](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_basic/)
+- [Minimal](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_minimal/)
+- [Draggable grid](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_grid/)
+- [Draggable staggered grid](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_staggered_grid/)
+- [Draggable with section](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_with_section/)
+- [Drag on Long press](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_on_longpress/)
+- [Uses onCheckCanDrop()](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_d_check_can_drop/)
+
+### Expandable item related examples
+
+- [Basic](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_e_basic/)
+- [Minimal](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_e_minimal/)
+- [Add & Remove item](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_e_add_remove/)
+- [Already expanded groups](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_e_already_expanded/)
+
+### Swipeable related examples
+
+- [Basic](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s_basic/)
+- [Minimal](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s_minimal/)
+- [Swipeable with button](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s_button/)
+- [Vertical](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s_vertical/)
+- [Viewpager](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s_viewpager/)
+- [Swipe on long press](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_s_longpress/)
+
+### Headers and Footers examples
+- [Minimal](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_hf_minimal)
+- [Expandable with Header/Footer](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_hf_e)
+- [Add & Remove Header/Footer items](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_hf_add_remove)
+
+### WrapperAdapter examples
+- [Composition of All Features](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_composition_all)
+- [Insertion items](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_wa_insertion)
+- [Filtering items](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_wa_filtering)
+
+### Hybrid examples
+
+- [Draggable & Swiping](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_ds/)
+- [Draggable & Swiping with section](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_ed_with_section/)
+- [Expandable & Draggable & Swiping](example/src/main/java/com/h6ah4i/android/example/advrecyclerview/demo_eds/)
+
 
 
 Primary classes/interfaces
 ---
+
+### WrapperAdapter related classes/interfaces
+
+| Class/Interface name                  | Description                                              |
+|---------------------------------------|----------------------------------------------------------|
+| [`WrapperAdapter`<VH>](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/adapter/WrapperAdapter.java)         | Adds several methods to RecyclerView.Adapter to manage with wrapped adapters                       |
+| [`ItemIdComposer`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/adapter/ItemIdComposer.java)             | Utility class for handling packed item IDs |
+| [`ItemViewTypeComposer`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/adapter/ItemViewTypeComposer.java) | Utility class for handling packed item view types |
+| [`SimpleWrapperAdapter<VH>`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/adapter/SimpleWrapperAdapter.java) | Base implementation of WrapperAdapter which wraps one adapter |
 
 ### Drag & Drop related classes/interfaces
 
@@ -139,6 +117,7 @@ Primary classes/interfaces
 | [`DraggableItemAdapter<T>`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/draggable/DraggableItemAdapter.java)             | Implement this interface on your RecyclerView.Adapter    |
 | [`DraggableItemViewHolder`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/draggable/DraggableItemViewHolder.java)             | Implement this interface on your RecyclerView.ViewHolder |
 | [`DraggableItemConstants`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/draggable/DraggableItemConstants.java)               | Constant values area decleared in this interface |
+| [`DraggableItemAnimator`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/animator/DraggableItemAnimator.java)
 
 
 ### Swiping related classes/interfaces
@@ -149,6 +128,7 @@ Primary classes/interfaces
 | [`SwipeableItemAdapter<T>`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/swipeable/SwipeableItemAdapter.java)             | Implement this interface on your RecyclerView.Adapter    |
 | [`SwipeableItemViewHolder`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/swipeable/SwipeableItemViewHolder.java)             | Implement this interface on your RecyclerView.ViewHolder |
 | [`SwipeableItemConstants`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/swipeable/SwipeableItemConstants.java)               | Constant values area decleared in this interface |
+| [`SwipeDismissItemAnimator`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/animator/SwipeDismissItemAnimator.java)
 
 
 ### Expandable item related classes/interfaces
@@ -182,6 +162,16 @@ Primary classes/interfaces
 | [`AbstractExpandableItemViewHolder`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/utils/AbstractExpandableItemViewHolder.java)            | ViewHolder class which implements boilerplate code of the  `ExpandableItemViewHolder` interface      |
 | [`AbstractDraggableSwipeableItemViewHolder`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/utils/AbstractDraggableSwipeableItemViewHolder.java) | ViewHolder class which implements boilerplate code of the `DraggableItemViewHolder` and the `SwipeableItemViewHolder` interfaces      |
 | [`AbstractExpandableItemAdapter<GVH, CVH>`](library/src/main/java/com/h6ah4i/android/widget/advrecyclerview/utils/AbstractExpandableItemAdapter.java)  | Adapter class which implements boilerplate code of the `ExpandableItemAdapter` interface |
+
+Other examples
+---
+
+| 
+### iOS Mail app like swipe action
+
+<img src="images/other_example_ios_mail.png" width="200" />
+
+- [Repository](https://github.com/h6ah4i/RecyclerViewiOSMailAppLikeSwipe)
 
 
 License

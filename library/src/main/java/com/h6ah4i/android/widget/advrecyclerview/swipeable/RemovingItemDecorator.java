@@ -35,21 +35,21 @@ class RemovingItemDecorator extends RecyclerView.ItemDecoration {
     private static final int NOTIFY_REMOVAL_EFFECT_PHASE_1 = 0;
     private static final int NOTIFY_REMOVAL_EFFECT_END = 1;
 
-    private static final long ADDITIONAL_REMOVE_DURATION = 0;  // workaround: to avoid the gap between the below item
+    private static final long ADDITIONAL_REMOVE_DURATION = 50;  // workaround: to avoid the gap between the below item
 
     private RecyclerView mRecyclerView;
     private RecyclerView.ViewHolder mSwipingItem;
-    private long mSwipingItemId;
-    private Rect mSwipingItemBounds = new Rect();
+    private final long mSwipingItemId;
+    private final Rect mSwipingItemBounds = new Rect();
     private int mTranslationX;
     private int mTranslationY;
     private long mStartTime;
-    private long mRemoveAnimationDuration;
-    private long mMoveAnimationDuration;
+    private final long mRemoveAnimationDuration;
+    private final long mMoveAnimationDuration;
     private Interpolator mMoveAnimationInterpolator;
     private Drawable mSwipeBackgroundDrawable;
 
-    private boolean mHorizontal;
+    private final boolean mHorizontal;
     private int mPendingNotificationMask = 0;
 
     public RemovingItemDecorator(RecyclerView rv, RecyclerView.ViewHolder swipingItem, int result, long removeAnimationDuration, long moveAnimationDuration) {
@@ -149,7 +149,7 @@ class RemovingItemDecorator extends RecyclerView.ItemDecoration {
     }
 
     public void start() {
-        final View containerView = ((SwipeableItemViewHolder) mSwipingItem).getSwipeableContainerView();
+        final View containerView = SwipeableViewHolderUtils.getSwipeableContainerView(mSwipingItem);
 
         ViewCompat.animate(containerView).cancel();
 

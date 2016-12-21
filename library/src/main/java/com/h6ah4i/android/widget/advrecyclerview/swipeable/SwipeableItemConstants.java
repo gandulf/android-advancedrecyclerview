@@ -305,9 +305,9 @@ public interface SwipeableItemConstants {
 
     /**
      * <p>After-reaction type used for the {@link SwipeableItemViewHolder#setAfterSwipeReaction(int)} and {@link SwipeableItemViewHolder#getAfterSwipeReaction()} methods.</p>
-     * <p>Represents perform nothing.</p>
+     * <p>Represents moving the item back to its original position.</p>
      */
-    int AFTER_SWIPE_REACTION_DEFAULT = 0;
+    int AFTER_SWIPE_REACTION_MOVE_TO_ORIGIN = 0;
 
     /**
      * <p>After-reaction type used for the {@link SwipeableItemViewHolder#setAfterSwipeReaction(int)} and {@link SwipeableItemViewHolder#getAfterSwipeReaction()} methods.</p>
@@ -321,12 +321,25 @@ public interface SwipeableItemConstants {
      */
     int AFTER_SWIPE_REACTION_MOVE_TO_SWIPED_DIRECTION = 2;
 
+    /**
+     * <p>After-reaction type used for the {@link SwipeableItemViewHolder#setAfterSwipeReaction(int)} and {@link SwipeableItemViewHolder#getAfterSwipeReaction()} methods.</p>
+     * <p>Represents performing no action on the item.</p>
+     */
+    int AFTER_SWIPE_REACTION_DO_NOTHING = 3;
+
+    /**
+     * <p>After-reaction type used for the {@link SwipeableItemViewHolder#setAfterSwipeReaction(int)} and {@link SwipeableItemViewHolder#getAfterSwipeReaction()} methods.</p>
+     * <p>Represents moving the item back to its original position. (Alias of the {@link #AFTER_SWIPE_REACTION_MOVE_TO_ORIGIN})</p>
+     */
+    int AFTER_SWIPE_REACTION_DEFAULT = AFTER_SWIPE_REACTION_MOVE_TO_ORIGIN;
+
     // ---
     /**
      * <p>Special value for the {@link SwipeableItemViewHolder#setSwipeItemHorizontalSlideAmount(float)}
      * and {@link SwipeableItemViewHolder#getSwipeItemHorizontalSlideAmount()} methods.</p>
      * <p>Indicates that this item is pinned to LEFT of the window.</p>
      */
+    @SuppressWarnings("PointlessArithmeticExpression")
     float OUTSIDE_OF_THE_WINDOW_LEFT = -((1 << 16) + 0);
 
     /**
@@ -341,6 +354,7 @@ public interface SwipeableItemConstants {
      * and {@link SwipeableItemViewHolder#getSwipeItemHorizontalSlideAmount()} methods.</p>
      * <p>Indicates that this item is pinned to RIGHT the window.</p>
      */
+    @SuppressWarnings("PointlessArithmeticExpression")
     float OUTSIDE_OF_THE_WINDOW_RIGHT = ((1 << 16) + 0);
 
     /**

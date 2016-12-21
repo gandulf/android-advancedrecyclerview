@@ -18,12 +18,14 @@ package com.h6ah4i.android.widget.advrecyclerview.draggable;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.Interpolator;
 
 import com.h6ah4i.android.widget.advrecyclerview.utils.CustomRecyclerViewUtils;
 
@@ -33,7 +35,6 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
 
     private int mTranslationX;
     private int mTranslationY;
-    private int mRecyclerViewPaddingLeft;
     private Bitmap mDraggingItemImage;
     private int mTranslationLeftLimit;
     private int mTranslationRightLimit;
@@ -42,16 +43,31 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
     private int mTouchPositionX;
     private int mTouchPositionY;
     private NinePatchDrawable mShadowDrawable;
-    private Rect mShadowPadding = new Rect();
+    private final Rect mShadowPadding = new Rect();
     private boolean mStarted;
     private boolean mIsScrolling;
     private ItemDraggableRange mRange;
     private int mLayoutOrientation;
     private DraggingItemInfo mDraggingItemInfo;
+    private Paint mPaint;
+    private long mStartMillis;
+
+    private long mStartAnimationDurationMillis = 0;
+    private float mTargetDraggingItemScale = 1.0f;
+    private float mTargetDraggingItemRotation = 0.0f;
+    private float mTargetDraggingItemAlpha = 1.0f;
+    private Interpolator mScaleInterpolator = null;
+    private Interpolator mRotationInterpolator = null;
+    private Interpolator mAlphaInterpolator = null;
+    private float mLastDraggingItemScale;
+    private float mLastDraggingItemRotation;
+    private float mLastDraggingItemAlpha;
+
 
     public DraggingItemDecorator(RecyclerView recyclerView, RecyclerView.ViewHolder draggingItem, ItemDraggableRange range) {
         super(recyclerView, draggingItem);
         mRange = range;
+        mPaint = new Paint();
     }
 
     private static int clip(int value, int min, int max) {
@@ -115,15 +131,51 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
 
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        // NOTE:
-        // On lollipop or later, View has Z-axis property and no needed to draw the dragging view manually.
-        // However, if the RecyclerView has any other decorations or RecyclerView is in scrolling state,
-        // need to draw it to avoid visual corruptions.
-        if (mDraggingItemImage != null) {
-            final float left = mTranslationX + /*mRecyclerViewPaddingLeft*/ + mDraggingItemInfo.margins.left - mShadowPadding.left;
-            final float top = /*mDraggingItemMargins.top +*/ mTranslationY - mShadowPadding.top;
-            c.drawBitmap(mDraggingItemImage, left, top, null);
+        if (mDraggingItemImage == null) {
+            return;
         }
+
+        final int elapsedMillis = (int) Math.min(System.currentTimeMillis() - mStartMillis, mStartAnimationDurationMillis);
+        final float t = (mStartAnimationDurationMillis > 0) ? ((float) elapsedMillis / mStartAnimationDurationMillis) : 1.0f;
+        final float scale = getInterpolation(mScaleInterpolator, t) * (mTargetDraggingItemScale - 1.0f) + 1.0f;
+        final float alpha = getInterpolation(mAlphaInterpolator, t) * (mTargetDraggingItemAlpha - 1.0f) + 1.0f;
+        final float rotation = getInterpolation(mRotationInterpolator, t) * mTargetDraggingItemRotation;
+
+        if (scale > 0.0f && alpha > 0.0f) {
+            final int w = mDraggingItemImage.getWidth();
+            final int h = mDraggingItemImage.getHeight();
+            final int iw = w - mShadowPadding.left - mShadowPadding.right;
+            final int ih = h - mShadowPadding.top - mShadowPadding.bottom;
+            final float invScale = 1.0f / scale;
+
+            mPaint.setAlpha((int) (alpha * 255));
+
+            int savedCount = c.save(Canvas.MATRIX_SAVE_FLAG);
+            c.scale(scale, scale);
+            c.translate((mTranslationX + 0.5f * iw) * invScale, (mTranslationY + 0.5f * ih) * invScale);
+            c.rotate(rotation);
+            c.translate(-(0.5f * w), -(0.5f * h));
+            c.drawBitmap(mDraggingItemImage, 0, 0, mPaint);
+            c.restoreToCount(savedCount);
+        }
+
+        if (t < 1.0f) {
+            ViewCompat.postInvalidateOnAnimation(mRecyclerView);
+        }
+
+        mLastDraggingItemScale = scale;
+        mLastDraggingItemRotation = rotation;
+        mLastDraggingItemAlpha = alpha;
+    }
+
+    public void setupDraggingItemEffects(DraggingItemEffectsInfo info) {
+        mStartAnimationDurationMillis = info.durationMillis;
+        mTargetDraggingItemScale = info.scale;
+        mScaleInterpolator = info.scaleInterpolator;
+        mTargetDraggingItemRotation = info.rotation;
+        mRotationInterpolator = info.rotationInterpolator;
+        mTargetDraggingItemAlpha = info.alpha;
+        mAlphaInterpolator = info.alphaInterpolator;
     }
 
     public void start(MotionEvent e, DraggingItemInfo draggingItemInfo) {
@@ -138,17 +190,34 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
 
         mTranslationLeftLimit = mRecyclerView.getPaddingLeft();
         mTranslationTopLimit = mRecyclerView.getPaddingTop();
-        mRecyclerViewPaddingLeft = mRecyclerView.getPaddingLeft();
         mLayoutOrientation = CustomRecyclerViewUtils.getOrientation(mRecyclerView);
+
+        mLastDraggingItemScale = 1.0f;
+        mLastDraggingItemRotation = 0.0f;
+        mLastDraggingItemAlpha = 1.0f;
 
         // hide
         itemView.setVisibility(View.INVISIBLE);
 
-        update(e);
+        update(e, true);
 
         mRecyclerView.addItemDecoration(this);
+        mStartMillis = System.currentTimeMillis();
 
         mStarted = true;
+    }
+
+    public void updateDraggingItemView(DraggingItemInfo info, RecyclerView.ViewHolder vh) {
+        if (!mStarted) {
+            return;
+        }
+        if (mDraggingItemViewHolder != vh) {
+            invalidateDraggingItem();
+            mDraggingItemViewHolder = vh;
+        }
+        mDraggingItemImage = createDraggingItemImage(vh.itemView, mShadowDrawable);
+        mDraggingItemInfo = info;
+        refresh(true);
     }
 
     public void finish(boolean animate) {
@@ -165,7 +234,10 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
         // return to default position
         updateDraggingItemPosition(mTranslationX, mTranslationY);
         if (mDraggingItemViewHolder != null) {
-            moveToDefaultPosition(mDraggingItemViewHolder.itemView, animate);
+            moveToDefaultPosition(
+                    mDraggingItemViewHolder.itemView,
+                    mLastDraggingItemScale, mLastDraggingItemRotation, mLastDraggingItemAlpha,
+                    animate);
         }
 
         // show
@@ -186,23 +258,32 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
         mTranslationRightLimit = 0;
         mTranslationTopLimit = 0;
         mTranslationBottomLimit = 0;
-        mRecyclerViewPaddingLeft = 0;
         mTouchPositionX = 0;
         mTouchPositionY = 0;
         mStarted = false;
     }
 
-    public void update(MotionEvent e) {
+    public boolean update(MotionEvent e, boolean force) {
         mTouchPositionX = (int) (e.getX() + 0.5f);
         mTouchPositionY = (int) (e.getY() + 0.5f);
-        refresh();
+
+        return refresh(force);
     }
 
-    public void refresh() {
-        updateTranslationOffset();
-        updateDraggingItemPosition(mTranslationX, mTranslationY);
+    public boolean refresh(boolean force) {
+        final int prevTranslationX = mTranslationX;
+        final int prevTranslationY = mTranslationY;
 
-        ViewCompat.postInvalidateOnAnimation(mRecyclerView);
+        updateTranslationOffset();
+
+        final boolean updated = (prevTranslationX != mTranslationX) || (prevTranslationY != mTranslationY);
+
+        if (updated || force) {
+            updateDraggingItemPosition(mTranslationX, mTranslationY);
+            ViewCompat.postInvalidateOnAnimation(mRecyclerView);
+        }
+
+        return updated;
     }
 
     public void setShadowDrawable(NinePatchDrawable shadowDrawable) {
@@ -221,45 +302,72 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
         return mTranslationX;
     }
 
+    public int getDraggingItemMoveOffsetY() {
+        return mTranslationY - mDraggingItemInfo.initialItemTop;
+    }
+
+    public int getDraggingItemMoveOffsetX() {
+        return mTranslationX - mDraggingItemInfo.initialItemLeft;
+    }
+
     private void updateTranslationOffset() {
         final RecyclerView rv = mRecyclerView;
         final int childCount = rv.getChildCount();
-        if (childCount > 0) {
-            mTranslationLeftLimit = rv.getPaddingLeft();
-            mTranslationRightLimit = Math.max(0, (rv.getWidth() - rv.getPaddingLeft() - mDraggingItemInfo.width));
 
-            mTranslationTopLimit = rv.getPaddingTop();
-            mTranslationBottomLimit = Math.max(0, (rv.getHeight() - rv.getPaddingBottom() - mDraggingItemInfo.height));
+        if (childCount > 0) {
+            mTranslationLeftLimit = 0;
+            mTranslationRightLimit = rv.getWidth() - mDraggingItemInfo.width;
+
+            mTranslationTopLimit = 0;
+            mTranslationBottomLimit = rv.getHeight() - mDraggingItemInfo.height;
+
+            switch (mLayoutOrientation) {
+                case CustomRecyclerViewUtils.ORIENTATION_VERTICAL: {
+                    mTranslationTopLimit = -mDraggingItemInfo.height;
+                    mTranslationBottomLimit = rv.getHeight();
+                    mTranslationLeftLimit += rv.getPaddingLeft();
+                    mTranslationRightLimit -= rv.getPaddingRight();
+                    break;
+                }
+                case CustomRecyclerViewUtils.ORIENTATION_HORIZONTAL: {
+                    mTranslationTopLimit += rv.getPaddingTop();
+                    mTranslationBottomLimit -= rv.getPaddingBottom();
+                    mTranslationLeftLimit = -mDraggingItemInfo.width;
+                    mTranslationRightLimit = rv.getWidth();
+                    break;
+                }
+            }
+
+            mTranslationRightLimit = Math.max(mTranslationLeftLimit, mTranslationRightLimit);
+            mTranslationBottomLimit = Math.max(mTranslationTopLimit, mTranslationBottomLimit);
 
             if (!mIsScrolling) {
-                final int firstVisiblePosition = CustomRecyclerViewUtils.findFirstVisibleItemPosition(rv);
-                final int lastVisiblePosition = CustomRecyclerViewUtils.findLastVisibleItemPosition(rv);
-
+                final int firstVisiblePosition = CustomRecyclerViewUtils.findFirstVisibleItemPosition(rv, true);
+                final int lastVisiblePosition = CustomRecyclerViewUtils.findLastVisibleItemPosition(rv, true);
+                final View firstChild = findRangeFirstItem(rv, mRange, firstVisiblePosition, lastVisiblePosition);
+                final View lastChild = findRangeLastItem(rv, mRange, firstVisiblePosition, lastVisiblePosition);
 
                 switch (mLayoutOrientation) {
                     case CustomRecyclerViewUtils.ORIENTATION_VERTICAL: {
-                        final View topChild = findRangeFirstItem(rv, mRange, firstVisiblePosition, lastVisiblePosition);
-                        final View bottomChild = findRangeLastItem(rv, mRange, firstVisiblePosition, lastVisiblePosition);
 
-                        if (topChild != null) {
-                            mTranslationTopLimit = Math.min(mTranslationBottomLimit, topChild.getTop());
+                        if (firstChild != null) {
+                            mTranslationTopLimit = Math.min(mTranslationBottomLimit, firstChild.getTop());
                         }
 
-                        if (bottomChild != null) {
-                            mTranslationBottomLimit = Math.min(mTranslationBottomLimit, bottomChild.getTop());
+                        if (lastChild != null) {
+                            final int limit = Math.max(0, lastChild.getBottom() - mDraggingItemInfo.height);
+                            mTranslationBottomLimit = Math.min(mTranslationBottomLimit, limit);
                         }
                         break;
                     }
                     case CustomRecyclerViewUtils.ORIENTATION_HORIZONTAL: {
-                        final View leftChild = findRangeFirstItem(rv, mRange, firstVisiblePosition, lastVisiblePosition);
-                        final View rightChild = findRangeLastItem(rv, mRange, firstVisiblePosition, lastVisiblePosition);
-
-                        if (leftChild != null) {
-                            mTranslationLeftLimit = Math.min(mTranslationLeftLimit, leftChild.getLeft());
+                        if (firstChild != null) {
+                            mTranslationLeftLimit = Math.min(mTranslationLeftLimit, firstChild.getLeft());
                         }
 
-                        if (rightChild != null) {
-                            mTranslationRightLimit = Math.min(mTranslationRightLimit, rightChild.getLeft());
+                        if (lastChild != null) {
+                            final int limit = Math.max(0, lastChild.getRight() - mDraggingItemInfo.width);
+                            mTranslationRightLimit = Math.min(mTranslationRightLimit, limit);
                         }
                         break;
                     }
@@ -301,21 +409,32 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
     }
 
     private Bitmap createDraggingItemImage(View v, NinePatchDrawable shadow) {
-        int width = v.getWidth() + mShadowPadding.left + mShadowPadding.right;
-        int height = v.getHeight() + mShadowPadding.top + mShadowPadding.bottom;
+        int viewTop = v.getTop();
+        int viewLeft = v.getLeft();
+        int viewWidth = v.getWidth();
+        int viewHeight = v.getHeight();
 
-        final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        int canvasWidth = viewWidth + mShadowPadding.left + mShadowPadding.right;
+        int canvasHeight = viewHeight + mShadowPadding.top + mShadowPadding.bottom;
+
+        v.measure(
+                View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(viewHeight, View.MeasureSpec.EXACTLY));
+
+        v.layout(viewLeft, viewTop, viewLeft + viewWidth, viewTop + viewHeight);
+
+        final Bitmap bitmap = Bitmap.createBitmap(canvasWidth, canvasHeight, Bitmap.Config.ARGB_8888);
 
         final Canvas canvas = new Canvas(bitmap);
 
         if (shadow != null) {
-            shadow.setBounds(0, 0, width, height);
+            shadow.setBounds(0, 0, canvasWidth, canvasHeight);
             shadow.draw(canvas);
         }
 
         final int savedCount = canvas.save(Canvas.CLIP_SAVE_FLAG | Canvas.MATRIX_SAVE_FLAG);
         // NOTE: Explicitly set clipping rect. This is required on Gingerbread.
-        canvas.clipRect(mShadowPadding.left, mShadowPadding.top, width - mShadowPadding.right, height - mShadowPadding.bottom);
+        canvas.clipRect(mShadowPadding.left, mShadowPadding.top, canvasWidth - mShadowPadding.right, canvasHeight - mShadowPadding.bottom);
         canvas.translate(mShadowPadding.left, mShadowPadding.top);
         v.draw(canvas);
         canvas.restoreToCount(savedCount);
@@ -376,5 +495,9 @@ class DraggingItemDecorator extends BaseDraggableItemDecorator {
         mDraggingItemViewHolder = holder;
 
         holder.itemView.setVisibility(View.INVISIBLE);
+    }
+
+    private static float getInterpolation(Interpolator interpolator, float input) {
+        return (interpolator != null) ? interpolator.getInterpolation(input) : input;
     }
 }

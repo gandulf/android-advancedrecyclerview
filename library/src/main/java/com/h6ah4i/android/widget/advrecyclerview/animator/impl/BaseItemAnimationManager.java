@@ -16,6 +16,7 @@
 
 package com.h6ah4i.android.widget.advrecyclerview.animator.impl;
 
+import android.support.v4.animation.AnimatorCompatHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
@@ -28,10 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseItemAnimationManager<T extends ItemAnimationInfo> {
-    protected BaseItemAnimator mItemAnimator;
-    protected List<T> mPending;
-    protected List<List<T>> mDeferredReadySets;
-    protected List<RecyclerView.ViewHolder> mActive;
+    protected final BaseItemAnimator mItemAnimator;
+    protected final List<T> mPending;
+    protected final List<List<T>> mDeferredReadySets;
+    protected final List<RecyclerView.ViewHolder> mActive;
 
     public BaseItemAnimationManager(BaseItemAnimator itemAnimator) {
         mItemAnimator = itemAnimator;
@@ -154,6 +155,11 @@ public abstract class BaseItemAnimationManager<T extends ItemAnimationInfo> {
 
     protected void endAnimation(RecyclerView.ViewHolder holder) {
         mItemAnimator.endAnimation(holder);
+    }
+
+    protected void resetAnimation(RecyclerView.ViewHolder holder) {
+        AnimatorCompatHelper.clearInterpolator(holder.itemView);
+        endAnimation(holder);
     }
 
     protected void dispatchFinishedWhenDone() {
